@@ -1,3 +1,3 @@
 # Vently Main Backend
 
-URD-101, CMKL 1st year research & development project
+URD-1, CMKL 1st year research & development project
