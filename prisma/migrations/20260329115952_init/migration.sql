@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE `Auth` MODIFY `type` ENUM('PASSWORD', 'JWT') NOT NULL;

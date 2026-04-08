@@ -1,0 +1,89 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+model User {
+  id        String   @id @default(uuid())
+  username  String   @unique
+  nickname  String
+  states    Json     @default("{}")
+  createdAt DateTime @default(now())
+
+  auths    Auth[]
+  sessions Session[]
+  diaries  Diary[]
+}
+
+// Future proofing Auth model (later we can add OAuth providers like Google, Discord, etc.)
+enum AuthType {
+  PASSWORD
+  JWT
+}
+
+model Auth {
+  id         String   @id @default(uuid())
+  userId     String
+  type       AuthType
+  password   String? // only for password auth
+  providerId String? // OAuth ID (Google sub, Discord id)
+  createdAt  DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([userId, type]) // one auth entries per user per type
+  @@unique([type, providerId]) // prevent duplicate OAuth accounts
+  @@index([userId])
+}
+
+enum SessionStatus {
+  ACTIVE
+  COMPLETED
+}
+
+model Session {
+  id             String   @id @default(uuid())
+  userId         String
+  status         SessionStatus @default(ACTIVE)
+  startAt        DateTime @default(now())
+  lastActiveAt   DateTime @updatedAt
+
+  messages       Message[]
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+enum Role {
+  USER
+  ASSISTANT
+}
+
+model Message {
+  id        String   @id @default(cuid()) // allow sorting by creation order without relying on timestamps
+  sessionId String
+  role      Role
+  content   String   @db.Text
+  timestamp DateTime @default(now())
+
+  session Session @relation(fields: [sessionId], references: [id])
+}
+
+model Diary {
+  sessionId         String   @id
+  userId            String
+  content           String   @db.Text
+  summarizedContent String?  @db.Text
+  createdAt         DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+}
